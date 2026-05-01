@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>beIN SPORTS IPTV Player</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<style>
+:root{
+  --bg-deep:#04040a;--bg-main:#09090f;--bg-card:#0f0f18;--bg-card-h:#161622;
+  --accent:#00d4ff;--accent-l:#5ce5ff;--accent-d:#009ec4;--accent-g:rgba(0,212,255,.2);
+  --txt:#e8eaf0;--txt2:#6e7290;--txt3:#3d415a;--bdr:#181b2e;
+  --ok:#00e676;--err:#ff3d5a;--warn:#ffab00;--live:#ff3d5a;
+  --usdt:#26a17b;--usdt-l:#3cc9a0;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--bg-deep);color:var(--txt);overflow:hidden;height:100vh;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--accent-d);border-radius:10px}
+img{display:block}
+
+.login-screen{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:var(--bg-deep);transition:opacity .6s,transform .6s;overflow-y:auto;padding:20px 0}
+.login-screen.hidden{opacity:0;transform:scale(1.06);pointer-events:none}
+.login-bg{position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% 15%,rgba(0,212,255,.06),transparent 70%),radial-gradient(ellipse 40% 50% at 85% 80%,rgba(0,158,196,.04),transparent)}
+.login-noise{position:fixed;inset:0;opacity:.02;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.login-glow{position:fixed;top:50%;left:50%;width:700px;height:700px;transform:translate(-50%,-55%);background:radial-gradient(circle,rgba(0,212,255,.04) 0%,transparent 70%);pointer-events:none;animation:lgP 5s ease-in-out infinite}
+@keyframes lgP{0%,100%{opacity:.5;transform:translate(-50%,-55%) scale(1)}50%{opacity:1;transform:translate(-50%,-55%) scale(1.15)}}
+.login-card{position:relative;z-index:2;width:760px;max-width:95vw;padding:2px;border-radius:20px;background:conic-gradient(from var(--ba,0deg),var(--accent),transparent 20%,transparent 50%,var(--accent-d),transparent 80%,var(--accent));animation:rB 4s linear infinite}
+@property --ba{syntax:"<angle>";initial-value:0deg;inherits:false}
+@keyframes rB{to{--ba:360deg}}
+.login-inner{background:linear-gradient(165deg,#0c0c16,#070710);border-radius:18px;overflow:hidden;position:relative}
+.login-inner::before{content:'';position:absolute;top:-1px;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,rgba(0,212,255,.25),transparent);z-index:2}
+.login-grid{display:grid;grid-template-columns:1fr 1px 1fr;min-height:460px}
+.login-divider{background:linear-gradient(180deg,transparent 5%,var(--bdr) 30%,var(--bdr) 70%,transparent 95%)}
+.login-pay{padding:30px 26px 26px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.pay-header{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--usdt-l)}
+.pay-header i{font-size:14px}
+.pay-qr{width:140px;height:140px;border-radius:12px;background:var(--bg-card);border:1px solid var(--bdr);padding:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:pointer}
+.pay-qr:hover{transform:scale(1.04);box-shadow:0 0 24px rgba(38,193,123,.15)}
+.pay-qr img{width:100%;height:100%;border-radius:4px}
+.pay-qr .qr-fallback{font-size:8px;color:var(--txt3);text-align:center;line-height:1.4}
+.pay-network{display:flex;align-items:center;gap:8px}
+.net-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;background:rgba(38,193,123,.1);border:1px solid rgba(38,193,123,.25);font-size:9px;font-weight:800;color:var(--usdt-l);letter-spacing:1px;text-transform:uppercase}
+.net-badge i{font-size:8px}
+.net-label{font-size:10px;color:var(--txt3);font-weight:500}
+.pay-addr{width:100%;display:flex;align-items:center;gap:6px;background:var(--bg-deep);border:1px solid var(--bdr);border-radius:8px;padding:6px 8px;cursor:pointer;transition:border-color .2s}
+.pay-addr:hover{border-color:rgba(38,193,123,.3)}
+.addr-text{flex:1;font-family:'Courier New',monospace;font-size:8.5px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.3px}
+.addr-copy{width:26px;height:26px;border-radius:5px;border:none;background:rgba(38,193,123,.1);color:var(--usdt-l);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:10px;flex-shrink:0}
+.addr-copy:hover{background:rgba(38,193,123,.2)}
+.addr-copy.copied{background:var(--ok);color:#fff}
+.pay-steps{width:100%;display:flex;flex-direction:column;gap:7px}
+.pay-step{display:flex;gap:7px;align-items:flex-start}
+.pay-step .step-n{width:16px;height:16px;border-radius:50%;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:var(--accent-l);flex-shrink:0;margin-top:1px}
+.pay-step .step-t{font-size:10px;color:var(--txt2);line-height:1.45}
+.pay-step .step-t b{color:var(--txt);font-weight:600}
+.pay-amount{display:flex;align-items:center;justify-content:center;gap:6px;padding:5px 14px;border-radius:6px;background:rgba(38,193,123,.06);border:1px solid rgba(38,193,123,.15)}
+.pay-amount .pa-val{font-size:16px;font-weight:900;color:var(--usdt-l)}
+.pay-amount .pa-cur{font-size:10px;font-weight:700;color:var(--usdt);letter-spacing:.5px}
+.login-auth{padding:30px 26px 26px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+.logo-area{text-align:center}
+.logo-area img{height:48px;margin:0 auto 10px;filter:drop-shadow(0 0 24px rgba(0,212,255,.15))}
+.logo-area .sub{font-size:9px;color:var(--txt3);letter-spacing:2.5px;text-transform:uppercase;font-weight:500}
+.code-section{width:100%}
+.code-section label{display:block;font-size:9px;font-weight:700;color:var(--txt3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1.3px}
+.code-wrap{display:flex;gap:6px}
+.code-input{flex:1;padding:11px 14px;background:rgba(255,255,255,.025);border:1px solid var(--bdr);border-radius:9px;color:var(--txt);font-family:'Courier New',monospace;font-size:14px;font-weight:700;letter-spacing:1.5px;outline:none;transition:all .25s;text-transform:lowercase}
+.code-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-g)}
+.code-input::placeholder{color:var(--txt3);font-family:'Outfit',sans-serif;font-size:11px;font-weight:400;letter-spacing:0;text-transform:none}
+.code-submit{width:44px;height:44px;border-radius:9px;border:none;background:linear-gradient(135deg,var(--accent-d),var(--accent));color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:14px;flex-shrink:0}
+.code-submit:hover{box-shadow:0 4px 20px rgba(0,212,255,.3);transform:translateY(-1px)}
+.code-submit:active{transform:translateY(0)}
+.code-submit.loading{pointer-events:none;opacity:.5}
+.code-submit.loading i{animation:spin .6s linear infinite}
+.code-submit.success{background:var(--ok)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.login-or{display:flex;align-items:center;gap:10px;width:100%;color:var(--txt3);font-size:9px;letter-spacing:1px;text-transform:uppercase}
+.login-or::before,.login-or::after{content:'';flex:1;height:1px;background:var(--bdr)}
+.xtream-toggle{font-size:10px;color:var(--txt3);cursor:pointer;background:none;border:1px solid var(--bdr);border-radius:6px;padding:5px 12px;font-family:inherit;transition:all .15s;letter-spacing:.3px}
+.xtream-toggle:hover{color:var(--txt2);border-color:var(--accent-d)}
+.full-login{width:100%;display:none;flex-direction:column;gap:10px;animation:fadeSlide .3s ease}
+.full-login.show{display:flex}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.fg{margin-bottom:0}
+.fg label{display:block;font-size:8.5px;font-weight:700;color:var(--txt3);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px}
+.fg .iw{position:relative}
+.fg .iw i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--txt3);font-size:10px;transition:color .2s}
+.fg input{width:100%;padding:9px 10px 9px 32px;background:rgba(255,255,255,.025);border:1px solid var(--bdr);border-radius:7px;color:var(--txt);font-family:inherit;font-size:11.5px;outline:none;transition:all .25s}
+.fg input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-g)}
+.fg input:focus~i{color:var(--accent-l)}
+.fg input::placeholder{color:var(--txt3)}
+.flbtn{width:100%;padding:9px;background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:7px;color:var(--txt2);font-family:inherit;font-size:10.5px;font-weight:600;cursor:pointer;transition:all .15s;letter-spacing:.5px}
+.flbtn:hover{background:var(--bg-card-h);color:var(--txt);border-color:var(--accent-d)}
+.lerr{display:none;width:100%;padding:7px 10px;background:rgba(255,61,90,.06);border:1px solid rgba(255,61,90,.15);border-radius:6px;color:#ff8fa3;font-size:10px;text-align:center;line-height:1.4}
+.lerr.show{display:block;animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+.app{display:none;height:100vh;grid-template-columns:230px 1fr;grid-template-rows:48px 1fr;opacity:0;transition:opacity .5s}
+.app.on{display:grid;opacity:1}
+.tbar{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:var(--bg-main);border-bottom:1px solid var(--bdr);z-index:10;position:relative}
+.tbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent-g),transparent)}
+.tbar-l{display:flex;align-items:center;gap:9px}
+.tbar-l img{height:20px;filter:drop-shadow(0 0 6px rgba(0,212,255,.12))}
+.tbar-l .ui{font-size:11px;color:var(--txt3)}.tbar-l .ui b{color:var(--accent-l);font-weight:600}
+.tbar-r{display:flex;align-items:center;gap:5px}
+.tb{width:30px;height:30px;border-radius:7px;background:rgba(255,255,255,.025);border:1px solid var(--bdr);color:var(--txt3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:11px}
+.tb:hover{background:var(--bg-card-h);color:var(--txt);border-color:var(--accent-d)}
+.lout{padding:4px 10px;border-radius:7px;background:rgba(255,61,90,.05);border:1px solid rgba(255,61,90,.12);color:#ff8fa3;font-size:9.5px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit;letter-spacing:.4px}
+.lout:hover{background:rgba(255,61,90,.12)}
+.side{background:var(--bg-main);border-right:1px solid var(--bdr);display:flex;flex-direction:column;overflow:hidden}
+.side-h{padding:9px 9px 7px;border-bottom:1px solid var(--bdr)}
+.side-h h3{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.6px;color:var(--txt3);margin-bottom:6px}
+.stabs{display:flex;gap:2px}
+.stab{flex:1;padding:5px 2px;text-align:center;background:rgba(255,255,255,.015);border:1px solid var(--bdr);border-radius:5px;color:var(--txt3);font-size:8.5px;font-weight:600;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:.2px}
+.stab.on{background:linear-gradient(180deg,rgba(0,212,255,.14),rgba(0,212,255,.04));color:var(--accent-l);border-color:rgba(0,212,255,.28)}
+.stab:hover:not(.on){background:var(--bg-card);color:var(--txt2)}
+.stab i{display:block;font-size:11px;margin-bottom:1px}
+.acct{display:flex;gap:6px;padding:7px 9px;background:var(--bg-card);border-radius:7px;margin:5px 7px 3px;border:1px solid var(--bdr)}
+.acct .as{text-align:center;flex:1}
+.acct .as .v{font-size:13px;font-weight:800;color:var(--accent-l)}
+.acct .as .l{font-size:7.5px;color:var(--txt3);margin-top:1px;text-transform:uppercase;letter-spacing:.5px}
+.fav-toggle{display:flex;align-items:center;gap:6px;padding:6px 11px;margin:2px 7px;border-radius:6px;cursor:pointer;transition:all .15s;font-size:10.5px;color:var(--txt3);font-weight:500}
+.fav-toggle:hover{background:var(--bg-card);color:var(--txt2)}
+.fav-toggle.on{color:var(--live);background:rgba(255,61,90,.05)}
+.fav-toggle i{font-size:10px}
+.catlist{flex:1;overflow-y:auto;padding:3px 7px}
+.ci{padding:7px 9px;border-radius:6px;font-size:11px;color:var(--txt3);cursor:pointer;transition:all .15s;margin-bottom:1px;display:flex;align-items:center;gap:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:2px solid transparent}
+.ci:hover{background:var(--bg-card);color:var(--txt2)}
+.ci.on{background:rgba(0,212,255,.05);color:var(--accent-l);font-weight:600;border-left-color:var(--accent)}
+.ci i{font-size:9px;flex-shrink:0;width:13px;text-align:center}
+.ci .cc{margin-left:auto;font-size:7.5px;background:var(--bg-card);padding:1px 5px;border-radius:3px;color:var(--txt3);font-weight:600;flex-shrink:0}
+.ci.on .cc{background:rgba(0,212,255,.1);color:var(--accent)}
+.carea{display:flex;flex-direction:column;overflow:hidden;background:var(--bg-deep);position:relative}
+.pwrap{position:relative;width:100%;background:#000;flex-shrink:0;overflow:hidden}
+.pwrap video{width:100%;height:100%;object-fit:contain;display:block;background:#000}
+.pwrap.switching video{opacity:.1;transition:opacity .08s}
+.pwrap video{transition:opacity .35s}
+.pwrap::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.4) 100%);pointer-events:none;z-index:2;opacity:.6}
+.pwrap::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.015) 3px,rgba(0,0,0,.015) 6px);pointer-events:none;z-index:3}
+.bufbar{position:absolute;top:0;left:0;right:0;height:3px;background:rgba(255,255,255,.03);z-index:12;overflow:hidden}
+.bufbar-f{height:100%;background:linear-gradient(90deg,var(--accent-d),var(--accent));width:0%;transition:width .4s;box-shadow:0 0 12px var(--accent-g)}
+.ch-badge{position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:8px;padding:6px 14px 6px 10px;border-radius:8px;background:rgba(0,0,0,.6);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.06);opacity:0;transition:opacity .25s;pointer-events:none;z-index:10}
+.pwrap.sc .ch-badge{opacity:1}
+.ch-badge .chb-num{font-size:20px;font-weight:900;color:var(--accent-l);line-height:1;font-variant-numeric:tabular-nums;min-width:24px;text-align:right}
+.ch-badge .chb-sep{width:1px;height:22px;background:rgba(255,255,255,.1)}
+.ch-badge .chb-info{display:flex;flex-direction:column;gap:0}
+.ch-badge .chb-name{font-size:11px;font-weight:700;color:#fff;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch-badge .chb-cat{font-size:8.5px;color:rgba(255,255,255,.4);margin-top:1px}
+.ch-badge .chb-live{display:inline-flex;align-items:center;gap:3px;font-size:7px;font-weight:700;color:var(--live);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.ch-badge .chb-live::before{content:'';width:4px;height:4px;background:var(--live);border-radius:50%;animation:lp 1s ease infinite}
+@keyframes lp{50%{opacity:.15}}
+.stats-panel{position:absolute;bottom:56px;right:12px;display:flex;flex-direction:column;gap:3px;padding:8px 12px;border-radius:9px;background:rgba(0,0,0,.55);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.06);opacity:0;transition:opacity .25s;pointer-events:none;z-index:10;min-width:145px}
+.pwrap.sc .stats-panel{opacity:1}
+.sp-row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.sp-row .sp-l{font-size:8px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+.sp-row .sp-v{font-size:10px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums}
+.sp-row .sp-v.ac{color:var(--accent-l)}.sp-row .sp-v.ok{color:var(--ok)}.sp-row .sp-v.wr{color:var(--warn)}.sp-row .sp-v.er{color:var(--err)}
+.sp-dot{display:inline-block;width:5px;height:5px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.sp-dot.g{background:var(--ok);box-shadow:0 0 5px rgba(0,230,118,.5)}.sp-dot.m{background:var(--warn)}.sp-dot.b{background:var(--err);box-shadow:0 0 5px rgba(255,61,90,.4)}
+.cind{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60px;height:60px;border-radius:50%;background:rgba(0,0,0,.45);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;opacity:0;transition:opacity .15s;pointer-events:none;z-index:6;border:1px solid rgba(255,255,255,.06)}
+.cind.show{opacity:1}
+.cind.buf{background:none;width:52px;height:52px;border:2.5px solid rgba(255,255,255,.08);border-top-color:var(--accent);animation:spin .65s linear infinite}
+.zapov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.65);backdrop-filter:blur(20px);opacity:0;transition:opacity .2s;pointer-events:none;z-index:8}
+.zapov.show{opacity:1}
+.zap-inner{display:flex;align-items:center;gap:20px;padding:20px 28px;border-radius:16px;background:rgba(8,8,14,.9);border:1px solid rgba(255,255,255,.06);box-shadow:0 20px 80px rgba(0,0,0,.5)}
+.zap-logo{width:64px;height:64px;border-radius:10px;background:var(--bg-card);display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0}
+.zap-logo img{width:100%;height:100%;object-fit:contain;padding:4px}
+.zap-logo .zp{font-size:22px;font-weight:900;color:var(--accent)}
+.zap-info{display:flex;flex-direction:column}
+.zap-num{font-size:42px;font-weight:900;color:var(--accent-l);line-height:1;font-variant-numeric:tabular-nums}
+.zap-name{font-size:16px;font-weight:700;color:#fff;margin-top:4px;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.zap-cat{font-size:11px;color:rgba(255,255,255,.35);margin-top:3px}
+.zap-live{display:inline-flex;align-items:center;gap:4px;font-size:8px;font-weight:700;color:var(--live);text-transform:uppercase;letter-spacing:1.2px;margin-top:5px}
+.zap-live::before{content:'';width:5px;height:5px;background:var(--live);border-radius:50%;animation:lp 1s ease infinite}
+.pinfo{position:absolute;bottom:44px;left:12px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10}
+.pwrap.sc .pinfo{opacity:1}
+.pinfo .nt{font-size:13px;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+.pinfo .nc{font-size:9.5px;color:rgba(255,255,255,.4);margin-top:1px;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.pctrl{position:absolute;bottom:0;left:0;right:0;height:44px;display:flex;align-items:center;padding:0 12px;gap:4px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:12;background:linear-gradient(transparent,rgba(0,0,0,.85) 30%,rgba(0,0,0,.9))}
+.pwrap.sc .pctrl{opacity:1;pointer-events:auto}
+.cb{width:30px;height:30px;border-radius:50%;border:none;background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;font-size:11px;flex-shrink:0}
+.cb:hover{background:rgba(255,255,255,.14);color:#fff}.cb.on{color:var(--accent-l)}
+.vwrap{display:flex;align-items:center;gap:3px}
+.vsl{width:0;opacity:0;transition:width .2s,opacity .2s;-webkit-appearance:none;appearance:none;height:3px;border-radius:2px;background:rgba(255,255,255,.12);outline:none;cursor:pointer}
+.vwrap:hover .vsl,.vwrap.act .vsl{width:62px;opacity:1}
+.vsl::-webkit-slider-thumb{-webkit-appearance:none;width:9px;height:9px;border-radius:50%;background:#fff;cursor:pointer}
+.sbar{flex:1;height:3px;-webkit-appearance:none;appearance:none;background:rgba(255,255,255,.08);border-radius:2px;outline:none;cursor:pointer;margin:0 3px}
+.sbar::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 0 8px var(--accent-g)}
+.sbar::-moz-range-thumb{width:11px;height:11px;border-radius:50%;background:var(--accent);cursor:pointer;border:none}
+.tdisp{font-size:9.5px;color:rgba(255,255,255,.4);font-variant-numeric:tabular-nums;white-space:nowrap;flex-shrink:0;padding:0 2px}
+.csel{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);border-radius:4px;color:rgba(255,255,255,.5);padding:2px 3px;font-size:8.5px;cursor:pointer;outline:none;font-family:inherit}
+.csel option{background:var(--bg-card);color:#fff}
+.ctrl-sep{width:1px;height:18px;background:rgba(255,255,255,.08);flex-shrink:0;margin:0 2px}
+.cpan{flex:1;display:flex;flex-direction:column;border-top:1px solid var(--bdr);background:var(--bg-main);min-height:0}
+.cpan-h{display:flex;align-items:center;gap:7px;padding:7px 11px;border-bottom:1px solid var(--bdr);flex-shrink:0}
+.cpan-h h3{font-size:11.5px;font-weight:700;flex-shrink:0}
+.csrch{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.025);border:1px solid var(--bdr);border-radius:5px;padding:3px 7px;flex-shrink:0}
+.csrch i{color:var(--txt3);font-size:9px}
+.csrch input{background:none;border:none;outline:none;color:var(--txt);font-size:10.5px;font-family:inherit;width:110px}
+.csrch input::placeholder{color:var(--txt3)}
+.csort{flex-shrink:0}
+.clist{flex:1;overflow-y:auto;padding:3px;display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:2px;align-content:start;contain:strict}
+.chi{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:7px;cursor:pointer;transition:all .12s;border:1px solid transparent;position:relative}
+.chi:hover{background:var(--bg-card);border-color:var(--bdr)}
+.chi.on{background:linear-gradient(135deg,rgba(0,212,255,.09),rgba(0,212,255,.02));border-color:rgba(0,212,255,.18)}
+.chl{width:34px;height:34px;border-radius:6px;background:var(--bg-card);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--bdr)}
+.chl img{width:100%;height:100%;object-fit:contain;padding:2px}
+.chl .cp{font-size:12px;font-weight:800;color:var(--accent)}
+.chf{flex:1;min-width:0}
+.chfn{font-size:11px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chcg{font-size:9px;color:var(--txt3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chi.on .chfn{color:var(--accent-l)}
+.chi.on .chl{border-color:rgba(0,212,255,.25);background:rgba(0,212,255,.04)}
+.chfav{position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--txt3);opacity:0;transition:all .15s;cursor:pointer;border:none;z-index:2}
+.chi:hover .chfav{opacity:1}
+.chfav.fav{color:var(--live);opacity:1}
+.chpi{width:22px;height:22px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;opacity:0;transition:all .15s;flex-shrink:0;box-shadow:0 0 8px var(--accent-g)}
+.chi:hover .chpi,.chi.on .chpi{opacity:1}
+.chpi i{font-size:7px;color:#fff;margin-left:1px}
+.noch{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;color:var(--txt3);grid-column:1/-1}
+.noch i{font-size:28px;margin-bottom:7px;opacity:.25}.noch p{font-size:11px}
+.tc{position:fixed;top:12px;right:12px;z-index:200;display:flex;flex-direction:column;gap:4px}
+.toast{padding:7px 12px;border-radius:7px;font-size:11px;font-weight:500;animation:ti .3s ease;display:flex;align-items:center;gap:6px;backdrop-filter:blur(12px);box-shadow:0 6px 28px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.04)}
+.toast.ok{background:rgba(0,230,118,.08);color:#69f0ae}.toast.er{background:rgba(255,61,90,.08);color:#ff8fa3}.toast.in{background:rgba(0,212,255,.08);color:#80e5ff}
+.toast.rm{animation:to .2s ease forwards}
+@keyframes ti{from{transform:translateX(50px);opacity:0}to{transform:none;opacity:1}}
+@keyframes to{to{transform:translateX(50px);opacity:0}}
+.skov{position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.7);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.skov.show{opacity:1;pointer-events:auto}
+.skc{background:linear-gradient(160deg,#0f0f18,#070710);border:1px solid var(--bdr);border-radius:13px;padding:22px 26px;max-width:390px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.skc h2{font-size:13px;font-weight:800;margin-bottom:13px;color:var(--accent-l);letter-spacing:.4px}
+.skr{display:flex;justify-content:space-between;padding:4px 0;font-size:11px;color:var(--txt2);border-bottom:1px solid rgba(255,255,255,.025)}
+.skr:last-child{border:none}
+.skr kbd{background:var(--bg-deep);padding:2px 6px;border-radius:3px;font-family:inherit;font-size:9.5px;font-weight:700;color:var(--accent);border:1px solid var(--bdr)}
+.ptc{position:fixed;width:1px;height:1px;background:var(--accent);border-radius:50%;opacity:0;pointer-events:none;z-index:0;animation:fu linear infinite}
+@keyframes fu{0%{opacity:0;transform:translateY(100vh) scale(0)}10%{opacity:.3}90%{opacity:.04}100%{opacity:0;transform:translateY(-10vh) scale(1)}}
+
+.msg-widget{position:fixed;bottom:16px;right:16px;z-index:180;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.msg-toggle{width:44px;height:44px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--accent-d),var(--accent));color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s;box-shadow:0 4px 20px rgba(0,212,255,.25);position:relative}
+.msg-toggle:hover{transform:scale(1.06);box-shadow:0 6px 28px rgba(0,212,255,.35)}
+.msg-toggle .pulse-ring{position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--accent);opacity:0;animation:mPulse 2.5s ease-out infinite}
+@keyframes mPulse{0%{opacity:.6;transform:scale(.9)}70%{opacity:0;transform:scale(1.2)}100%{opacity:0;transform:scale(1.2)}}
+.msg-panel{width:280px;background:linear-gradient(165deg,#0f0f18,#0a0a12);border:1px solid var(--bdr);border-radius:14px;overflow:hidden;box-shadow:0 12px 50px rgba(0,0,0,.6),0 0 1px rgba(0,212,255,.1);transform:translateY(10px) scale(.95);opacity:0;pointer-events:none;transition:all .25s cubic-bezier(.4,0,.2,1);transform-origin:bottom right}
+.msg-panel.open{transform:translateY(0) scale(1);opacity:1;pointer-events:auto}
+.msg-panel-head{padding:12px 14px;background:linear-gradient(135deg,rgba(0,212,255,.08),rgba(0,212,255,.02));border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between}
+.msg-panel-head h4{font-size:11.5px;font-weight:700;color:var(--accent-l);letter-spacing:.3px}
+.msg-close{width:24px;height:24px;border-radius:6px;border:none;background:rgba(255,255,255,.05);color:var(--txt3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all .12s}
+.msg-close:hover{background:rgba(255,61,90,.1);color:var(--err)}
+.msg-panel-body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px}
+.msg-f{display:flex;flex-direction:column;gap:3px}
+.msg-f label{font-size:8px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px}
+.msg-f input,.msg-f textarea{width:100%;padding:7px 9px;background:rgba(255,255,255,.025);border:1px solid var(--bdr);border-radius:6px;color:var(--txt);font-family:inherit;font-size:10.5px;outline:none;transition:all .2s;resize:none}
+.msg-f input:focus,.msg-f textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-g)}
+.msg-f input::placeholder,.msg-f textarea::placeholder{color:var(--txt3);font-size:9.5px}
+.msg-f textarea{min-height:56px;line-height:1.4}
+.msg-send{width:100%;padding:8px;border:none;border-radius:7px;background:linear-gradient(135deg,var(--accent-d),var(--accent));color:#fff;font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:.8px;display:flex;align-items:center;justify-content:center;gap:5px}
+.msg-send:hover{box-shadow:0 4px 18px rgba(0,212,255,.25);transform:translateY(-1px)}
+.msg-send:active{transform:translateY(0)}
+.msg-send.loading{pointer-events:none;opacity:.6}
+.msg-send.loading .ms-txt{display:none}
+.msg-send.loading .ms-sp{display:block}
+.msg-send .ms-sp{display:none;width:14px;height:14px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+.msg-send.success{background:var(--ok)}
+.msg-note{font-size:7.5px;color:var(--txt3);text-align:center;line-height:1.3;opacity:.7}
+
+@media(max-width:768px){
+  .app.on{grid-template-columns:1fr;grid-template-rows:48px auto 1fr}
+  .side{border-right:none;border-bottom:1px solid var(--bdr);max-height:40px;overflow:hidden}
+  .side-h,.catlist,.acct,.fav-toggle{display:none}.stabs{padding:4px}
+  .clist{grid-template-columns:1fr}
+  .stats-panel{bottom:48px;right:6px;padding:5px 8px;min-width:120px}
+  .zap-inner{gap:12px;padding:14px 18px}.zap-logo{width:48px;height:48px}.zap-num{font-size:32px}.zap-name{font-size:13px}
+  .ch-badge{top:8px;left:8px;padding:4px 10px 4px 8px}.ch-badge .chb-num{font-size:16px}
+  .login-grid{grid-template-columns:1fr;grid-template-rows:auto 1px auto}
+  .login-divider{width:80%;height:1px;background:linear-gradient(90deg,transparent,var(--bdr),transparent);margin:0 auto}
+  .login-pay{padding:24px 20px 18px}.login-auth{padding:20px}
+  .msg-panel{width:calc(100vw - 32px);max-width:300px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<div id="ptc" aria-hidden="true"></div>
+<div class="tc" id="tc"></div>
+
+<div class="skov" id="skov">
+  <div class="skc">
+    <h2><i class="fas fa-keyboard"></i> Klavye Kısayolları</h2>
+    <div class="skr"><span>Kanal Yukarı</span><kbd>↑</kbd></div>
+    <div class="skr"><span>Kanal Aşağı</span><kbd>↓</kbd></div>
+    <div class="skr"><span>Oynat / Duraklat</span><kbd>Space</kbd></div>
+    <div class="skr"><span>Sessize Al</span><kbd>M</kbd></div>
+    <div class="skr"><span>Ses Artır</span><kbd>Shift + ↑</kbd></div>
+    <div class="skr"><span>Ses Azalt</span><kbd>Shift + ↓</kbd></div>
+    <div class="skr"><span>Tam Ekran</span><kbd>F</kbd></div>
+    <div class="skr"><span>Kısayollar</span><kbd>?</kbd></div>
+    <div class="skr"><span>Kanal Numarası</span><kbd>0-9</kbd></div>
+    <div class="skr"><span>Son Kanal</span><kbd>R</kbd></div>
+  </div>
+</div>
+
+<div class="msg-widget" id="msgWidget">
+  <div class="msg-panel" id="msgPanel">
+    <div class="msg-panel-head">
+      <h4><i class="fas fa-paper-plane" style="margin-right:5px;font-size:10px"></i>Bizimle İletişime Geç</h4>
+      <button class="msg-close" id="msgClose" aria-label="Kapat"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="msg-panel-body">
+      <div class="msg-f">
+        <label>İsim</label>
+        <input type="text" id="msgName" placeholder="Adınız Soyadınız" maxlength="50">
+      </div>
+      <div class="msg-f">
+        <label>Telefon Numarası</label>
+        <input type="tel" id="msgPhone" placeholder="05XX XXX XX XX" maxlength="15">
+      </div>
+      <div class="msg-f">
+        <label>Mesajınız</label>
+        <textarea id="msgText" placeholder="Mesajınızı yazın..." rows="3" maxlength="500"></textarea>
+      </div>
+      <button class="msg-send" id="msgSend"><span class="ms-txt"><i class="fas fa-paper-plane"></i> Gönder</span><div class="ms-sp"></div></button>
+      <div class="msg-note">Mesajınız doğrudan yöneticimize e-posta olarak iletilir.</div>
+    </div>
+  </div>
+  <button class="msg-toggle" id="msgToggle" aria-label="Mesaj gönder">
+    <span class="pulse-ring"></span>
+    <i class="fas fa-comment-dots"></i>
+  </button>
+</div>
+
+<section class="login-screen" id="ls">
+  <div class="login-bg"></div>
+  <div class="login-noise"></div>
+  <div class="login-glow"></div>
+  <div class="login-card">
+    <div class="login-inner">
+      <div class="login-grid">
+        <div class="login-pay">
+          <div class="pay-header"><i class="fab fa-usdt"></i><span>Aktivasyon</span></div>
+          <div class="pay-qr" id="payQr" title="QR Kodu"><img id="qrImg" src="" alt="USDT QR Kod"></div>
+          <div class="pay-network"><span class="net-badge"><i class="fas fa-link"></i> TRC-20</span><span class="net-label">USDT Network</span></div>
+          <div class="pay-addr" id="payAddr" title="Adresi kopyala"><span class="addr-text" id="addrText">Yükleniyor...</span><button class="addr-copy" id="addrCopy" aria-label="Kopyala"><i class="fas fa-copy"></i></button></div>
+          <div class="pay-amount"><span class="pa-val">1</span><span class="pa-cur">USDT</span></div>
+          <div class="pay-steps">
+            <div class="pay-step"><span class="step-n">1</span><span class="step-t"><b>1 USDT</b> yukarıdaki adrese gönderin</span></div>
+            <div class="pay-step"><span class="step-n">2</span><span class="step-t">İşlemi tamamladıktan sonra <b>cüzdan adresinizi</b> bize paylaşın</span></div>
+            <div class="pay-step"><span class="step-n">3</span><span class="step-t">Kullanıcı kodunuz <b>5 dakika</b> içinde sistem onaylamasını tamamlayınca verilecektir</span></div>
+          </div>
+        </div>
+        <div class="login-divider"></div>
+        <div class="login-auth">
+          <div class="logo-area">
+            <img src="https://z-cdn-media.chatglm.cn/files/74d05645-aa67-4642-811f-6f7590b32c33.png?auth_key=1877555732-b8bc0e1acfca41a080b5c4022ec18e62-0-d51b8ac6f1e69cc482b5389a20b4d258" alt="beIN SPORTS" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+            <div style="display:none;font-size:20px;font-weight:900;background:linear-gradient(135deg,var(--accent-l),var(--accent-d));-webkit-background-clip:text;-webkit-text-fill-color:transparent">beIN SPORTS</div>
+            <div class="sub">IPTV Player Pro</div>
+          </div>
+          <div class="code-section">
+            <label>Kullanıcı Kodu ile Giriş</label>
+            <div class="code-wrap">
+              <input type="text" class="code-input" id="codeInput" placeholder="beinXXXXXX" maxlength="20" autocomplete="off" spellcheck="false">
+              <button class="code-submit" id="codeSubmit" aria-label="Giriş Yap"><i class="fas fa-arrow-right"></i></button>
+            </div>
+          </div>
+          <div class="login-or"><span>veya</span></div>
+          <button class="xtream-toggle" id="xtreamToggle"><i class="fas fa-server" style="margin-right:4px"></i> Xtream Codes ile Giriş</button>
+          <form id="lf" class="full-login" autocomplete="off">
+            <div class="fg"><label>Sunucu</label><div class="iw"><input type="url" id="si" placeholder="http://sunucu.com:8080" required><i class="fas fa-server"></i></div></div>
+            <div class="fg"><label>Kullanıcı</label><div class="iw"><input type="text" id="su" placeholder="Kullanıcı adı" required><i class="fas fa-user"></i></div></div>
+            <div class="fg"><label>Şifre</label><div class="iw"><input type="password" id="sp" placeholder="Şifre" required><i class="fas fa-lock"></i></div></div>
+            <button type="submit" class="flbtn"><i class="fas fa-sign-in-alt" style="margin-right:4px"></i> Giriş Yap</button>
+          </form>
+          <div class="lerr" id="le"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="app" id="ap">
+  <header class="tbar">
+    <div class="tbar-l">
+      <img src="https://z-cdn-media.chatglm.cn/files/747a351c-6613-4248-bde0-e52a0892d0d0.png?auth_key=1877555732-592e388613c840e2a922cfc49f33de5f-0-25bc54b0628f01c35376125ae15bc464" alt="beIN" onerror="this.outerHTML='<span style=font-size:13px;font-weight:900;color:var(--accent-l)>beIN</span>'">
+      <div class="ui">Hoş geldiniz, <b id="du"></b></div>
+    </div>
+    <div class="tbar-r">
+      <button class="tb" id="skb" title="Kısayollar"><i class="fas fa-keyboard"></i></button>
+      <button class="tb" id="fsb" title="Tam Ekran"><i class="fas fa-expand"></i></button>
+      <button class="lout" id="lob"><i class="fas fa-sign-out-alt"></i> Çıkış</button>
+    </div>
+  </header>
+  <aside class="side">
+    <div class="side-h">
+      <h3>İçerik Türü</h3>
+      <div class="stabs">
+        <div class="stab on" data-t="live" role="tab"><i class="fas fa-broadcast-tower"></i>Canlı</div>
+        <div class="stab" data-t="movies" role="tab"><i class="fas fa-film"></i>Film</div>
+        <div class="stab" data-t="series" role="tab"><i class="fas fa-tv"></i>Dizi</div>
+      </div>
+    </div>
+    <div class="acct">
+      <div class="as"><div class="v" id="sL">0</div><div class="l">Canlı</div></div>
+      <div class="as"><div class="v" id="sM">0</div><div class="l">Film</div></div>
+      <div class="as"><div class="v" id="sS">0</div><div class="l">Dizi</div></div>
+    </div>
+    <div class="fav-toggle" id="ftg"><i class="fas fa-heart"></i> Favorilerim</div>
+    <div class="catlist" id="cl" role="list"><div class="noch"><i class="fas fa-layer-group"></i><p>Yükleniyor...</p></div></div>
+  </aside>
+  <div class="carea">
+    <div class="pwrap" id="pw">
+      <video id="vp" playsinline></video>
+      <div class="bufbar"><div class="bufbar-f" id="bf"></div></div>
+      <div class="ch-badge" id="chb"><div class="chb-num" id="chbn">1</div><div class="chb-sep"></div><div class="chb-info"><div class="chb-name" id="chbname">Kanal Seçilmedi</div><div class="chb-cat" id="chbcat">—</div><div class="chb-live" id="chblive">Canlı Yayın</div></div></div>
+      <div class="stats-panel" id="sp">
+        <div class="sp-row"><span class="sp-l">Çözünürlük</span><span class="sp-v ac" id="spRes">—</span></div>
+        <div class="sp-row"><span class="sp-l">Hız</span><span class="sp-v" id="spSpd">1.0x</span></div>
+        <div class="sp-row"><span class="sp-l">Bitrate</span><span class="sp-v" id="spBw"><span class="sp-dot g"></span>— Mbps</span></div>
+        <div class="sp-row"><span class="sp-l">Buffer</span><span class="sp-v" id="spBuf">—s</span></div>
+        <div class="sp-row"><span class="sp-l">FPS</span><span class="sp-v" id="spFps">—</span></div>
+      </div>
+      <div class="cind" id="ci"><i class="fas fa-play"></i></div>
+      <div class="zapov" id="zo"><div class="zap-inner"><div class="zap-logo" id="zl"><span class="zp">?</span></div><div class="zap-info"><div class="zap-num" id="zn">1</div><div class="zap-name" id="znm">—</div><div class="zap-cat" id="zct">—</div><div class="zap-live">Canlı Yayın</div></div></div></div>
+      <div class="pinfo"><div class="nt" id="nt">Kanal Seçilmedi</div><div class="nc" id="nc">Listeden seçim yapın</div></div>
+      <div class="pctrl">
+        <button class="cb" id="ppb" aria-label="Oynat/Duraklat"><i class="fas fa-play"></i></button>
+        <div class="vwrap" id="vw"><button class="cb" id="vmb" aria-label="Ses"><i class="fas fa-volume-up"></i></button><input type="range" class="vsl" id="vsl" min="0" max="100" value="80" aria-label="Ses"></div>
+        <div class="tdisp" id="td" style="display:none"><span id="ct2">00:00</span> / <span id="du2">00:00</span></div>
+        <input type="range" class="sbar" id="sbr" min="0" max="100" value="0" step="0.1" style="display:none" aria-label="Kaydırma">
+        <div class="ctrl-sep"></div>
+        <select class="csel" id="spd" aria-label="Hız"><option value="1">1x</option><option value="0.5">.5x</option><option value="0.75">.75x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option></select>
+        <select class="csel" id="qsl" aria-label="Kalite"><option value="-1">Oto</option></select>
+        <div class="ctrl-sep"></div>
+        <button class="cb" id="pipb" aria-label="PiP"><i class="fas fa-external-link-square-alt"></i></button>
+        <button class="cb" id="fsb2" aria-label="Tam ekran"><i class="fas fa-expand"></i></button>
+      </div>
+    </div>
+    <div class="cpan">
+      <div class="cpan-h">
+        <h3 id="cpt">Kanallar</h3>
+        <div class="csrch"><i class="fas fa-search"></i><input type="text" id="cs" placeholder="Ara..." aria-label="Ara"></div>
+        <button class="tb csort" id="sob" title="Sırala"><i class="fas fa-sort-alpha-down"></i></button>
+      </div>
+      <div class="clist" id="chl" role="list"><div class="noch"><i class="fas fa-list"></i><p>Kanal bulunamadı</p></div></div>
+    </div>
+  </div>
+</section>
+
+<script>
+const WALLET_ADDRESS='TXzqU1QLDPJiRkdB88wrCQsc2Yx6yY1zNs';
+const CODE_MAP={'bein806264':{server:'http://hd.gold34.uk:80',username:'palala',password:'2345653234mm'}};
+
+const S={sv:'',un:'',pw:'',ui:null,cat:{live:[],movies:[],series:[]},str:{live:[],movies:[],series:[]},at:'live',ac:'all',as:null,hls:null,favMode:false,sort:'default',lastCh:null,zapBuf:'',zapTmr:null,ctrlTmr:null,statsTmr:null,prevCh:null,fav:new Set()};
+let curFiltered=[];
+const $=id=>document.getElementById(id);
+const D={ls:$('ls'),ap:$('ap'),lf:$('lf'),le:$('le'),si:$('si'),su:$('su'),sp:$('sp'),du:$('du'),cl:$('cl'),chl:$('chl'),cs:$('cs'),cpt:$('cpt'),vp:$('vp'),pw:$('pw'),ci:$('ci'),nt:$('nt'),nc:$('nc'),bf:$('bf'),zo:$('zo'),zl:$('zl'),zn:$('zn'),znm:$('znm'),zct:$('zct'),chb:$('chb'),chbn:$('chbn'),chbname:$('chbname'),chbcat:$('chbcat'),chblive:$('chblive'),spRes:$('spRes'),spSpd:$('spSpd'),spBw:$('spBw'),spBuf:$('spBuf'),spFps:$('spFps'),ppb:$('ppb'),vmb:$('vmb'),vsl:$('vsl'),vw:$('vw'),td:$('td'),ct2:$('ct2'),du2:$('du2'),sbr:$('sbr'),spd:$('spd'),qsl:$('qsl'),pipb:$('pipb'),fsb:$('fsb'),fsb2:$('fsb2'),lob:$('lob'),skb:$('skb'),skov:$('skov'),ftg:$('ftg'),sob:$('sob'),sL:$('sL'),sM:$('sM'),sS:$('sS'),tc:$('tc'),codeInput:$('codeInput'),codeSubmit:$('codeSubmit'),qrImg:$('qrImg'),addrText:$('addrText'),addrCopy:$('addrCopy'),payAddr:$('payAddr'),xtreamToggle:$('xtreamToggle'),msgToggle:$('msgToggle'),msgPanel:$('msgPanel'),msgClose:$('msgClose'),msgSend:$('msgSend'),msgName:$('msgName'),msgPhone:$('msgPhone'),msgText:$('msgText')};
+
+/* İletişim Widget */
+D.msgToggle.addEventListener('click',()=>{
+  const open=D.msgPanel.classList.toggle('open');
+  D.msgToggle.querySelector('i').className=open?'fas fa-times':'fas fa-comment-dots';
+  D.msgToggle.querySelector('.pulse-ring').style.display=open?'none':'';
+});
+D.msgClose.addEventListener('click',()=>{
+  D.msgPanel.classList.remove('open');
+  D.msgToggle.querySelector('i').className='fas fa-comment-dots';
+  D.msgToggle.querySelector('.pulse-ring').style.display='';
+});
+D.msgSend.addEventListener('click',async()=>{
+  const name=D.msgName.value.trim();
+  const phone=D.msgPhone.value.trim();
+  const text=D.msgText.value.trim();
+  if(!name||!phone||!text){toast('Tüm alanları doldurun','er');return}
+  D.msgSend.classList.add('loading');
+  const now=new Date();
+  const dateStr=now.toLocaleString('tr-TR',{timeZone:'Europe/Istanbul'});
+  try{
+    const res=await fetch('https://formsubmit.co/ajax/palermotr63@gmail.com',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({
+        _subject:'Yeni İletişim Mesajı — beIN IPTV',
+        _captcha:'false',
+        _template:'box',
+        name:name,
+        phone:phone,
+        message:text,
+        tarih:dateStr,
+        kaynak:'beIN SPORTS IPTV Player'
+      })
+    });
+    if(res.ok){
+      D.msgSend.classList.remove('loading');D.msgSend.classList.add('success');
+      D.msgSend.querySelector('.ms-txt').innerHTML='<i class="fas fa-check"></i> Gönderildi';
+      toast('Mesajınız gönderildi','ok');
+      D.msgName.value='';D.msgPhone.value='';D.msgText.value='';
+      setTimeout(()=>{D.msgSend.classList.remove('success');D.msgSend.querySelector('.ms-txt').innerHTML='<i class="fas fa-paper-plane"></i> Gönder';D.msgPanel.classList.remove('open');D.msgToggle.querySelector('i').className='fas fa-comment-dots';D.msgToggle.querySelector('.pulse-ring').style.display=''},2500);
+    }else throw new Error('HTTP '+res.status);
+  }catch(e){
+    D.msgSend.classList.remove('loading');
+    toast('Gönderilemedi, tekrar deneyin','er');
+  }
+});
+
+/* QR Kod — Kendi TRON logolu QR görseli */
+(function(){
+  const a=WALLET_ADDRESS;
+  D.addrText.textContent=a;
+  D.qrImg.src='https://z-cdn-media.chatglm.cn/files/8153a0a5-9764-4ec5-a689-921dd360e0b9.jpg?auth_key=1877560284-5356c7ff31a045be84aba6f92d7a67a8-0-db9d781185b7447610935c599a4a42d3';
+  D.qrImg.style.borderRadius='6px';
+  D.qrImg.style.objectFit='cover';
+  D.qrImg.onerror=function(){this.outerHTML='<div class="qr-fallback"><i class="fas fa-qrcode" style="font-size:40px;color:var(--accent-d);opacity:.3"></i><br>QR Yüklenemedi</div>'}
+})();
+D.payAddr.addEventListener('click',()=>{navigator.clipboard.writeText(WALLET_ADDRESS).then(()=>{D.addrCopy.classList.add('copied');D.addrCopy.innerHTML='<i class="fas fa-check"></i>';toast('Adres kopyalandı','ok');setTimeout(()=>{D.addrCopy.classList.remove('copied');D.addrCopy.innerHTML='<i class="fas fa-copy"></i>'},2000)}).catch(()=>toast('Kopyalama başarısız','er'))});
+D.xtreamToggle.addEventListener('click',()=>{D.lf.classList.toggle('show')});
+
+/* Yardımcılar */
+const cleanU=u=>u.replace(/\/+$/,'');
+function toast(m,t='in'){const ic={ok:'fa-check-circle',er:'fa-times-circle',in:'fa-info-circle'};const el=document.createElement('div');el.className=`toast ${t}`;el.innerHTML=`<i class="fas ${ic[t]}"></i>${m}`;D.tc.appendChild(el);setTimeout(()=>{el.classList.add('rm');setTimeout(()=>el.remove(),200)},3000)}
+function init(n){if(!n)return'?';const w=n.replace(/[^a-zA-Z0-9ÇçĞğİıÖöŞşÜü\s]/g,'').trim().split(/\s+/);return w.length>=2?(w[0][0]+w[1][0]).toUpperCase():w[0].substring(0,2).toUpperCase()}
+function fmtTime(s){if(!s||!isFinite(s))return'00:00';const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=Math.floor(s%60);return h>0?`${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`}
+function loadFav(){try{return new Set(JSON.parse(localStorage.getItem('iptv_fav_'+S.un)||'[]'))}catch(e){return new Set()}}
+function saveFav(){localStorage.setItem('iptv_fav_'+S.un,JSON.stringify([...S.fav]))}
+function togFav(id){if(S.fav.has(id))S.fav.delete(id);else S.fav.add(id);saveFav()}
+function addRecent(ch){try{let r=JSON.parse(localStorage.getItem('iptv_rec_'+S.un)||'[]');r=r.filter(x=>x.id!==ch.stream_id);r.unshift({id:ch.stream_id,t:S.at,n:ch.name||ch.title,ts:Date.now()});if(r.length>30)r=r.slice(0,30);localStorage.setItem('iptv_rec_'+S.un,JSON.stringify(r))}catch(e){}}
+function loadVol(){return parseFloat(localStorage.getItem('iptv_vol'))||80}
+function saveVol(v){localStorage.setItem('iptv_vol',v)}
+
+/* API */
+function apiUrl(a){return`${cleanU(S.sv)}/player_api.php?username=${encodeURIComponent(S.un)}&password=${encodeURIComponent(S.pw)}${a?'&action='+a:''}`}
+function streamUrl(id,e='m3u8'){return`${cleanU(S.sv)}/live/${encodeURIComponent(S.un)}/${encodeURIComponent(S.pw)}/${id}.${e}`}
+function movieUrl(id,e='mp4'){return`${cleanU(S.sv)}/movie/${encodeURIComponent(S.un)}/${encodeURIComponent(S.pw)}/${id}.${e}`}
+async function api(a){const r=await fetch(apiUrl(a));if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.json()}
+function findBein1(streams){if(!streams||!streams.length)return null;const rx=[/^bein\s*sports\s*1\s*hd$/i,/^bein\s*sports\s*1\s*uhd$/i,/^bein\s*sports\s*1$/i,/^bein\s*1\s*hd$/i,/^bein\s*sports\s*1\s/i,/^bein\s*1\s/i,/bein.*1/i];for(const r of rx){const f=streams.find(s=>r.test(s.name||''));if(f)return f}return streams[0]}
+
+/* Giriş */
+async function handleCodeLogin(){
+  const code=D.codeInput.value.trim().toLowerCase();
+  if(!code)return showErr('Kullanıcı kodunu girin.');
+  if(!CODE_MAP[code])return showErr('Geçersiz kullanıcı kodu.');
+  const cred=CODE_MAP[code];S.sv=cred.server;S.un=cred.username;S.pw=cred.password;S.fav=loadFav();
+  D.codeSubmit.classList.add('loading');D.le.classList.remove('show');
+  try{const d=await api('');if(d.user_info)S.ui=d.user_info;else if(d.server_info)S.ui={username:S.un,status:'Active'};else throw new Error('Geçersiz yanıt');if(S.ui.status&&S.ui.status!=='Active')throw new Error('Hesap aktif değil: '+S.ui.status);D.codeSubmit.classList.remove('loading');D.codeSubmit.classList.add('success');D.codeSubmit.innerHTML='<i class="fas fa-check"></i>';toast('Giriş başarılı','ok');D.sL.textContent=d.user_info?.active_cons||'—';await Promise.all([lCat('live','get_live_categories'),lCat('movies','get_vod_categories'),lCat('series','get_series_categories')]);await lStr('live','get_live_streams');resizePlayer();D.ls.classList.add('hidden');setTimeout(()=>{D.ap.classList.add('on');D.du.textContent=S.ui.username||S.un;D.vsl.value=loadVol();D_vp.volume=loadVol()/100;const b1=findBein1(S.str.live);if(b1)play(b1)},400);lStr('movies','get_vod_streams').then(()=>D.sM.textContent=S.str.movies.length);lStr('series','get_series_streams').then(()=>D.sS.textContent=S.str.series.length)}
+  catch(err){D.codeSubmit.classList.remove('loading');let m='Bağlantı başarısız.';if(err.message.includes('Failed to fetch'))m='Sunucuya ulaşılamıyor.';else if(err.message.includes('HTTP 401'))m='Kod geçersiz veya süresi dolmuş.';else m=err.message;showErr(m)}
+}
+async function handleXtreamLogin(e){
+  e.preventDefault();const sv=D.si.value.trim(),un=D.su.value.trim(),pw=D.sp.value.trim();
+  if(!sv||!un||!pw)return showErr('Tüm alanları doldurun.');
+  S.sv=sv;S.un=un;S.pw=pw;S.fav=loadFav();D.le.classList.remove('show');
+  try{const d=await api('');if(d.user_info)S.ui=d.user_info;else if(d.server_info)S.ui={username:un,status:'Active'};else throw new Error('Geçersiz yanıt');if(S.ui.status&&S.ui.status!=='Active')throw new Error('Hesap aktif değil: '+S.ui.status);toast('Bağlantı başarılı','ok');D.sL.textContent=d.user_info?.active_cons||'—';await Promise.all([lCat('live','get_live_categories'),lCat('movies','get_vod_categories'),lCat('series','get_series_categories')]);await lStr('live','get_live_streams');resizePlayer();D.ls.classList.add('hidden');setTimeout(()=>{D.ap.classList.add('on');D.du.textContent=S.ui.username||un;D.vsl.value=loadVol();D_vp.volume=loadVol()/100;const b1=findBein1(S.str.live);if(b1)play(b1)},400);lStr('movies','get_vod_streams').then(()=>D.sM.textContent=S.str.movies.length);lStr('series','get_series_streams').then(()=>D.sS.textContent=S.str.series.length)}
+  catch(err){let m='Bağlantı başarısız.';if(err.message.includes('Failed to fetch'))m='Sunucuya ulaşılamıyor.';else if(err.message.includes('HTTP 401'))m='Kullanıcı adı veya şifre hatalı.';else m=err.message;showErr(m)}
+}
+function showErr(m){D.le.textContent=m;D.le.classList.add('show')}
+async function lCat(t,a){try{S.cat[t]=Array.isArray(await api(a))?await api(a):[]}catch(e){S.cat[t]=[]}if(t===S.at)rCat()}
+async function lStr(t,a){try{const d=await api(a);S.str[t]=Array.isArray(d)?d:[]}catch(e){S.str[t]=[]}if(t===S.at)rCh()}
+
+/* Render */
+function rCat(){const cats=S.cat[S.at],strs=S.str[S.at];let h=`<div class="ci ${S.ac==='all'?'on':''}" data-c="all"><i class="fas fa-globe" style="color:var(--accent)"></i>Tümü<span class="cc">${strs.length}</span></div>`;try{const rec=JSON.parse(localStorage.getItem('iptv_rec_'+S.un)||'[]').filter(x=>x.t===S.at);if(rec.length>0)h+=`<div class="ci ${S.ac==='recent'?'on':''}" data-c="recent"><i class="fas fa-history" style="color:var(--warn)"></i>Son İzlenenler<span class="cc">${rec.length}</span></div>`}catch(e){}cats.forEach(c=>{const cnt=strs.filter(s=>String(s.category_id)===String(c.category_id)).length;h+=`<div class="ci ${S.ac===String(c.category_id)?'on':''}" data-c="${c.category_id}"><i class="fas fa-folder" style="color:var(--txt3)"></i>${c.category_name}<span class="cc">${cnt}</span></div>`});D.cl.innerHTML=h;D.cl.querySelectorAll('.ci').forEach(el=>el.addEventListener('click',()=>{S.ac=el.dataset.c;rCat();rCh()}))}
+function rCh(filt=''){const strs=S.str[S.at];const names={live:'Kanallar',movies:'Filmler',series:'Diziler'};D.cpt.textContent=S.favMode?'Favoriler':names[S.at];let fl=strs;if(S.favMode)fl=fl.filter(s=>S.fav.has(s.stream_id));if(S.ac==='recent'){try{const rec=JSON.parse(localStorage.getItem('iptv_rec_'+S.un)||'[]').filter(x=>x.t===S.at);const ids=new Set(rec.map(x=>x.id));fl=fl.filter(s=>ids.has(s.stream_id));fl.sort((a,b)=>{const ai=rec.findIndex(x=>x.id===a.stream_id),bi=rec.findIndex(x=>x.id===b.stream_id);return ai-bi})}catch(e){fl=[]}}else if(S.ac!=='all'){fl=fl.filter(s=>String(s.category_id)===S.ac)}if(filt){const q=filt.toLowerCase();fl=fl.filter(s=>(s.name||s.title||'').toLowerCase().includes(q))}if(S.sort==='az')fl=[...fl].sort((a,b)=>(a.name||a.title||'').localeCompare(b.name||b.title||''));else if(S.sort==='za')fl=[...fl].sort((a,b)=>(b.name||b.title||'').localeCompare(a.name||a.title||''));curFiltered=fl;if(!fl.length){D.chl.innerHTML=`<div class="noch"><i class="fas fa-inbox"></i><p>${filt||S.favMode?'Bulunamadı':'Boş kategori'}</p></div>`;return}const frag=document.createDocumentFragment();fl.forEach((s,i)=>{const nm=s.name||s.title||'İsimsiz';const logo=s.stream_icon||s.stream_img||s.cover||'';const grp=s.category_id?(S.cat[S.at].find(c=>String(c.category_id)===String(s.category_id))?.category_name||''):(s.group||'');const act=S.as&&S.as.stream_id===s.stream_id;const fav=S.fav.has(s.stream_id);const el=document.createElement('div');el.className='chi'+(act?' on':'');el.dataset.i=i;el.setAttribute('role','listitem');el.tabIndex=0;el.innerHTML=`<div class="chl">${logo?`<img src="${logo}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<span class=cp>${init(nm)}</span>'">`:`<span class="cp">${init(nm)}</span>`}</div><div class="chf"><div class="chfn">${nm}</div>${grp?`<div class="chcg">${grp}</div>`:''}</div><button class="chfav${fav?' fav':''}" data-sid="${s.stream_id}" aria-label="Favori"><i class="fas fa-heart"></i></button><div class="chpi"><i class="fas fa-play"></i></div>`;frag.appendChild(el)});D.chl.innerHTML='';D.chl.appendChild(frag)}
+
+/* Event */
+D.chl.addEventListener('click',e=>{const fv=e.target.closest('.chfav');if(fv){e.stopPropagation();togFav(parseInt(fv.dataset.sid));rCh(D.cs.value.trim());return}const it=e.target.closest('.chi');if(!it)return;const idx=parseInt(it.dataset.i);if(curFiltered[idx])play(curFiltered[idx])});
+D.chl.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();const it=e.target.closest('.chi');if(it){const idx=parseInt(it.dataset.i);if(curFiltered[idx])play(curFiltered[idx])}}});
+D.codeSubmit.addEventListener('click',handleCodeLogin);
+D.codeInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();handleCodeLogin()}});
+D.lf.addEventListener('submit',handleXtreamLogin);
+
+/* Oynatıcı */
+const D_vp=D.vp;
+function play(stream){
+  if(!stream)return;if(S.as&&S.as.stream_id!==stream.stream_id)S.prevCh=S.as;S.as=stream;
+  const nm=stream.name||stream.title||'İsimsiz';const grp=stream.category_id?(S.cat[S.at].find(c=>String(c.category_id)===String(stream.category_id))?.category_name||''):(stream.group||'');const idx=curFiltered.findIndex(s=>s.stream_id===stream.stream_id)+1;
+  D.chbn.textContent=idx||'—';D.chbname.textContent=nm;D.chbcat.textContent=grp||'Yayın';D.chblive.style.display=S.at==='live'?'inline-flex':'none';D.nt.textContent=nm;D.nc.textContent=grp||'Yayın';showZap(nm,grp,stream.stream_icon||stream.stream_img||stream.cover||'',idx);addRecent(stream);
+  D.pw.classList.add('switching');if(S.hls){S.hls.destroy();S.hls=null}
+  let url='';if(S.at==='live')url=streamUrl(stream.stream_id,'m3u8');else if(S.at==='movies'){const ext=stream.container_extension||'mp4';url=movieUrl(stream.stream_id,ext)}else url=`${cleanU(S.sv)}/series/${encodeURIComponent(S.un)}/${encodeURIComponent(S.pw)}/${stream.stream_id}.mp4`;
+  if(url.endsWith('.m3u8')){if(Hls.isSupported()){const h=new Hls({enableWorker:true,lowLatencyMode:true,maxBufferLength:20,maxMaxBufferLength:40,startFragPrefetch:true,fragLoadingTimeOut:15000,fragLoadingMaxRetry:3,manifestLoadingTimeOut:12000,levelLoadingTimeOut:12000});S.hls=h;h.loadSource(url);h.attachMedia(D_vp);h.on(Hls.Events.MANIFEST_PARSED,()=>{D_vp.play().catch(()=>{});D.pw.classList.remove('switching');D.ci.classList.remove('show');updateQualityOpts()});h.on(Hls.Events.ERROR,(ev,d)=>{if(d.fatal){if(d.type===Hls.ErrorTypes.NETWORK_ERROR){toast('Ağ hatası, yeniden bağlanılıyor...','er');h.startLoad()}else if(d.type===Hls.ErrorTypes.MEDIA_ERROR){toast('Medya hatası, kurtarılıyor...','er');h.recoverMediaError()}else{toast('Oynatma hatası','er');h.destroy();S.hls=null}}});startStats()}else if(D_vp.canPlayType('application/vnd.apple.mpegurl')){D_vp.src=url;D_vp.addEventListener('loadedmetadata',()=>{D_vp.play().catch(()=>{});D.pw.classList.remove('switching');D.ci.classList.remove('show')},{once:true})}}
+  else{D_vp.src=url;D_vp.addEventListener('loadeddata',()=>{D_vp.play().catch(()=>{});D.pw.classList.remove('switching');D.ci.classList.remove('show')},{once:true});D.td.style.display='flex';D.sbr.style.display='block'}
+  if(S.at==='live'){D.td.style.display='none';D.sbr.style.display='none'}
+  D_vp.onerror=()=>{toast('Bu yayın oynatılamıyor','er');D.pw.classList.remove('switching')};
+  D.chl.querySelectorAll('.chi').forEach(el=>el.classList.remove('on'));const fi=curFiltered.findIndex(s=>s.stream_id===stream.stream_id);const items=D.chl.querySelectorAll('.chi');if(fi>=0&&items[fi]){items[fi].classList.add('on');items[fi].scrollIntoView({behavior:'smooth',block:'nearest'})}updatePPBtn();
+}
+
+let zapTimer;
+function showZap(nm,grp,logo,num){D.zn.textContent=num||'—';D.znm.textContent=nm;D.zct.textContent=grp||'';if(logo)D.zl.innerHTML=`<img src="${logo}" alt="" onerror="this.parentElement.innerHTML='<span class=\\'zp\\'>${init(nm)}</span>'">`;else D.zl.innerHTML=`<span class="zp">${init(nm)}</span>`;D.zo.classList.add('show');clearTimeout(zapTimer);zapTimer=setTimeout(()=>D.zo.classList.remove('show'),2200)}
+function updateQualityOpts(){if(!S.hls)return;const lvls=S.hls.levels||[];D.qsl.innerHTML='<option value="-1">Oto</option>';lvls.forEach((l,i)=>{const h=l.height;let lb=h>=2160?'4K':h>=1080?'1080p':h>=720?'720p':h>=480?'480p':h>=360?'360p':h+'p';lb+=` (${Math.round(l.bitrate/1000)}k)`;D.qsl.innerHTML+=`<option value="${i}">${lb}</option>`})}
+D.qsl.addEventListener('change',()=>{if(S.hls)S.hls.currentLevel=parseInt(D.qsl.value)});
+
+function startStats(){stopStats();S.statsTmr=setInterval(updateStats,1200)}
+function stopStats(){if(S.statsTmr){clearInterval(S.statsTmr);S.statsTmr=null}}
+function updateStats(){let res='—';if(D_vp.videoWidth&&D_vp.videoHeight){const w=D_vp.videoWidth,h=D_vp.videoHeight;res=h>=2160?'4K UHD':h>=1080?'1080p FHD':h>=720?'720p HD':h>=480?'480p SD':h>=360?'360p':w+'x'+h}D.spRes.textContent=res;D.spSpd.textContent=D_vp.playbackRate+'x';let bw=0;if(S.hls)bw=S.hls.bandwidthEstimate||0;const mbps=(bw/1000000).toFixed(1);const dc=mbps>=3?'g':mbps>=1?'m':'b';D.spBw.innerHTML=`<span class="sp-dot ${dc}"></span>${mbps} Mbps`;let bufS=0;if(D_vp.buffered.length>0)bufS=D_vp.buffered.end(D_vp.buffered.length-1)-D_vp.currentTime;bufS=Math.max(0,bufS);D.spBuf.textContent=Math.round(bufS)+'s';D.spBuf.className='sp-v '+(bufS>=10?'ok':bufS>=4?'wr':'er');D.bf.style.width=Math.min(100,(bufS/30)*100)+'%';D.bf.style.background=bufS>=10?'var(--ok)':bufS>=4?'var(--warn)':'var(--err)';let fps='—';try{if(D_vp.getVideoPlaybackQuality){const q=D_vp.getVideoPlaybackQuality();if(q.totalVideoFrames>30&&D_vp.currentTime>1)fps='~'+Math.min(60,Math.round(q.totalVideoFrames/D_vp.currentTime))}}catch(e){}D.spFps.textContent=fps;if(S.at!=='live'&&D_vp.duration){D.sbr.max=D_vp.duration;D.sbr.value=D_vp.currentTime;D.ct2.textContent=fmtTime(D_vp.currentTime);D.du2.textContent=fmtTime(D_vp.duration)}}
+
+/* Kontroller */
+function updatePPBtn(){D.ppb.innerHTML=D_vp.paused?'<i class="fas fa-play"></i>':'<i class="fas fa-pause"></i>'}
+D.ppb.addEventListener('click',()=>{D_vp.paused?D_vp.play().catch(()=>{}):D_vp.pause()});
+D_vp.addEventListener('play',()=>{updatePPBtn();showCenter('fa-play',350)});
+D_vp.addEventListener('pause',()=>{updatePPBtn();showCenter('fa-pause',350)});
+D_vp.addEventListener('waiting',()=>{D.ci.className='cind show buf'});
+D_vp.addEventListener('playing',()=>{D.ci.classList.remove('show','buf');D.pw.classList.remove('switching')});
+D_vp.addEventListener('timeupdate',()=>{if(S.at!=='live'&&D_vp.duration){D.sbr.max=D_vp.duration;D.sbr.value=D_vp.currentTime;D.ct2.textContent=fmtTime(D_vp.currentTime);D.du2.textContent=fmtTime(D_vp.duration)}});
+D.sbr.addEventListener('input',()=>{if(D_vp.duration)D_vp.currentTime=parseFloat(D.sbr.value)});
+function updateVolIcon(){const v=D_vp.volume,m=D_vp.muted;D.vmb.innerHTML=v===0||m?'<i class="fas fa-volume-mute"></i>':v<0.5?'<i class="fas fa-volume-down"></i>':'<i class="fas fa-volume-up"></i>'}
+D.vsl.addEventListener('input',()=>{D_vp.volume=D.vsl.value/100;D_vp.muted=false;saveVol(D.vsl.value);updateVolIcon()});
+D.vmb.addEventListener('click',()=>{D_vp.muted=!D_vp.muted;updateVolIcon()});
+D.spd.addEventListener('change',()=>{D_vp.playbackRate=parseFloat(D.spd.value)});
+D.pipb.addEventListener('click',async()=>{try{if(document.pictureInPictureElement)await document.exitPictureInPicture();else await D_vp.requestPictureInPicture()}catch(e){toast('PiP desteklenmiyor','er')}});
+function toggleFS(){if(!document.fullscreenElement)(D.pw.requestFullscreen||D.pw.webkitRequestFullscreen).call(D.pw);else(document.exitFullscreen||document.webkitExitFullscreen).call(document)}
+D.fsb.addEventListener('click',toggleFS);D.fsb2.addEventListener('click',toggleFS);
+document.addEventListener('fullscreenchange',()=>{const cls=document.fullscreenElement?'fas fa-compress':'fas fa-expand';D.fsb.querySelector('i').className=cls;D.fsb2.querySelector('i').className=cls});
+function showCtrl(){D.pw.classList.add('sc');clearTimeout(S.ctrlTmr);S.ctrlTmr=setTimeout(()=>{if(!D_vp.paused)D.pw.classList.remove('sc')},4000)}
+D.pw.addEventListener('mousemove',showCtrl);D.pw.addEventListener('touchstart',showCtrl,{passive:true});
+D.pw.addEventListener('mouseleave',()=>{clearTimeout(S.ctrlTmr);if(!D_vp.paused)S.ctrlTmr=setTimeout(()=>D.pw.classList.remove('sc'),1200)});
+let clickTmr;D_vp.addEventListener('click',()=>{clearTimeout(clickTmr);clickTmr=setTimeout(()=>{D_vp.paused?D_vp.play().catch(()=>{}):D_vp.pause()},200)});
+D_vp.addEventListener('dblclick',e=>{e.preventDefault();clearTimeout(clickTmr);toggleFS()});
+function showCenter(icon,dur){D.ci.className='cind show';D.ci.innerHTML=`<i class="fas ${icon}"></i>`;setTimeout(()=>D.ci.classList.remove('show'),dur)}
+
+function resizePlayer(){const vh=window.innerHeight;const cw=D.chl.parentElement?D.chl.parentElement.offsetHeight:200;const maxH=vh-48-Math.max(cw,150);D.pw.style.height=Math.max(170,Math.min(maxH,vh*0.6))+'px';D.pw.style.aspectRatio='unset'}
+window.addEventListener('resize',resizePlayer);
+
+document.querySelectorAll('.stab').forEach(t=>t.addEventListener('click',async()=>{const tp=t.dataset.t;if(tp===S.at)return;document.querySelectorAll('.stab').forEach(x=>x.classList.remove('on'));t.classList.add('on');S.at=tp;S.ac='all';S.favMode=false;D.ftg.classList.remove('on');const acts={live:'get_live_streams',movies:'get_vod_streams',series:'get_series_streams'};if(!S.str[tp].length){D.cl.innerHTML=D.chl.innerHTML=`<div class="noch"><i class="fas fa-spinner fa-spin"></i><p>Yükleniyor...</p></div>`;await lStr(tp,acts[tp])}rCat();rCh();resizePlayer();if(tp!=='live'){D.chblive.style.display='none';D.spFps.textContent='—';D.spRes.textContent='—'}}));
+
+let sTmr;D.cs.addEventListener('input',()=>{clearTimeout(sTmr);sTmr=setTimeout(()=>rCh(D.cs.value.trim()),180)});
+const sortModes=['default','az','za'];const sortIcons=['fa-sort-alpha-down','fa-sort-alpha-down','fa-sort-alpha-up'];let sortIdx=0;
+D.sob.addEventListener('click',()=>{sortIdx=(sortIdx+1)%3;S.sort=sortModes[sortIdx];D.sob.querySelector('i').className='fas '+sortIcons[sortIdx];rCh(D.cs.value.trim())});
+D.ftg.addEventListener('click',()=>{S.favMode=!S.favMode;D.ftg.classList.toggle('on',S.favMode);rCh(D.cs.value.trim())});
+D.skb.addEventListener('click',()=>D.skov.classList.toggle('show'));
+D.skov.addEventListener('click',e=>{if(e.target===D.skov)D.skov.classList.remove('show')});
+
+D.lob.addEventListener('click',()=>{if(S.hls){S.hls.destroy();S.hls=null}stopStats();D_vp.src='';D_vp.load();S.ui=null;S.cat={live:[],movies:[],series:[]};S.str={live:[],movies:[],series:[]};S.at='live';S.ac='all';S.as=null;S.favMode=false;S.prevCh=null;D.ap.classList.remove('on');setTimeout(()=>{D.ls.classList.remove('hidden');D.le.classList.remove('show');D.codeSubmit.classList.remove('success','loading');D.codeSubmit.innerHTML='<i class="fas fa-arrow-right"></i>';D.codeInput.value=''},300);document.querySelectorAll('.stab').forEach(t=>t.classList.remove('on'));document.querySelector('.stab[data-t="live"]').classList.add('on');D.ftg.classList.remove('on');sortIdx=0;S.sort='default';toast('Çıkış yapıldı','in')});
+
+document.addEventListener('keydown',e=>{
+  if(D.skov.classList.contains('show')){if(e.key==='Escape')D.skov.classList.remove('show');return}
+  if(!D.ap.classList.contains('on'))return;
+  if(document.activeElement===D.cs||document.activeElement===D.codeInput||document.activeElement===D.si||document.activeElement===D.su||document.activeElement===D.sp||document.activeElement===D.msgName||document.activeElement===D.msgPhone||document.activeElement===D.msgText)return;
+  const fl=curFiltered;if(!fl.length)return;const ci=S.as?fl.findIndex(s=>s.stream_id===S.as.stream_id):-1;
+  if(e.key==='ArrowUp'&&!e.shiftKey){e.preventDefault();play(fl[ci>0?ci-1:fl.length-1])}
+  else if(e.key==='ArrowDown'&&!e.shiftKey){e.preventDefault();play(fl[ci<fl.length-1?ci+1:0])}
+  else if(e.key===' '&&e.target===document.body){e.preventDefault();D_vp.paused?D_vp.play().catch(()=>{}):D_vp.pause()}
+  else if(e.key==='f'||e.key==='F'){e.preventDefault();toggleFS()}
+  else if(e.key==='m'||e.key==='M'){D_vp.muted=!D_vp.muted;updateVolIcon()}
+  else if(e.key==='ArrowUp'&&e.shiftKey){e.preventDefault();D_vp.volume=Math.min(1,D_vp.volume+0.1);D.vsl.value=Math.round(D_vp.volume*100);saveVol(D.vsl.value);updateVolIcon()}
+  else if(e.key==='ArrowDown'&&e.shiftKey){e.preventDefault();D_vp.volume=Math.max(0,D_vp.volume-0.1);D.vsl.value=Math.round(D_vp.volume*100);saveVol(D.vsl.value);updateVolIcon()}
+  else if(e.key==='?'||e.key==='/'){e.preventDefault();D.skov.classList.toggle('show')}
+  else if(e.key==='r'||e.key==='R'){if(S.prevCh){const pf=fl.find(s=>s.stream_id===S.prevCh.stream_id);if(pf)play(pf)}}
+  else if(e.key>='0'&&e.key<='9'){S.zapBuf+=e.key;showZapInput(S.zapBuf);clearTimeout(S.zapTmr);S.zapTmr=setTimeout(()=>{const num=parseInt(S.zapBuf);if(num>0&&num<=fl.length)play(fl[num-1]);S.zapBuf=''},1800)}
+});
+function showZapInput(n){D.zn.textContent=n;D.znm.textContent='Kanal seçiliyor...';D.zct.textContent='';D.zl.innerHTML=`<span class="zp" style="font-size:24px">${n}</span>`;D.zo.classList.add('show');clearTimeout(zapTimer);zapTimer=setTimeout(()=>D.zo.classList.remove('show'),2000)}
+
+(function(){const c=$('ptc');for(let i=0;i<10;i++){const p=document.createElement('div');p.className='ptc';p.style.left=Math.random()*100+'vw';p.style.animationDuration=(14+Math.random()*20)+'s';p.style.animationDelay=(Math.random()*14)+'s';p.style.width=p.style.height=(1+Math.random())+'px';c.appendChild(p)}})();
+</script>
+</body>
+</html>
