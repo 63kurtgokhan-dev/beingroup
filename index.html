@@ -449,10 +449,7 @@ img{display:block}
 <script>
 const WALLET_ADDRESS='TXzqU1QLDPJiRkdB88wrCQsc2Yx6yY1zNs';
 const CODE_MAP={'bein806264':{server:'http://hd.gold34.uk:80',username:'palala',password:'2345653234mm'}};
-var PROXY_URL = 'https://iptv-proxy.63kurtgokhan.workers.dev/?url=';
-function proxy(targetUrl) {
-    return PROXY_URL + encodeURIComponent(targetUrl);
-}
+
 const S={sv:'',un:'',pw:'',ui:null,cat:{live:[],movies:[],series:[]},str:{live:[],movies:[],series:[]},at:'live',ac:'all',as:null,hls:null,favMode:false,sort:'default',lastCh:null,zapBuf:'',zapTmr:null,ctrlTmr:null,statsTmr:null,prevCh:null,fav:new Set()};
 let curFiltered=[];
 const $=id=>document.getElementById(id);
@@ -516,10 +513,7 @@ D.msgSend.addEventListener('click',async()=>{
 })();
 D.payAddr.addEventListener('click',()=>{navigator.clipboard.writeText(WALLET_ADDRESS).then(()=>{D.addrCopy.classList.add('copied');D.addrCopy.innerHTML='<i class="fas fa-check"></i>';toast('Adres kopyalandı','ok');setTimeout(()=>{D.addrCopy.classList.remove('copied');D.addrCopy.innerHTML='<i class="fas fa-copy"></i>'},2000)}).catch(()=>toast('Kopyalama başarısız','er'))});
 D.xtreamToggle.addEventListener('click',()=>{D.lf.classList.toggle('show')});
-var PROXY_URL = 'https://iptv-proxy.63kurtgokhan.workers.dev/?url=';
-function proxy(targetUrl) {
-    return PROXY_URL + encodeURIComponent(targetUrl);
-}
+
 /* Yardımcılar */
 const cleanU=u=>u.replace(/\/+$/,'');
 function toast(m,t='in'){const ic={ok:'fa-check-circle',er:'fa-times-circle',in:'fa-info-circle'};const el=document.createElement('div');el.className=`toast ${t}`;el.innerHTML=`<i class="fas ${ic[t]}"></i>${m}`;D.tc.appendChild(el);setTimeout(()=>{el.classList.add('rm');setTimeout(()=>el.remove(),200)},3000)}
@@ -533,11 +527,12 @@ function loadVol(){return parseFloat(localStorage.getItem('iptv_vol'))||80}
 function saveVol(v){localStorage.setItem('iptv_vol',v)}
 
 /* API */
-function apiUrl(a){return proxy(cleanU(S.sv)+'/player_api.php?username='+encodeURIComponent(S.un)+'&password='+encodeURIComponent(S.pw)+(a?'&action='+a:''))}
-function streamUrl(id,e){return proxy(cleanU(S.sv)+'/live/'+encodeURIComponent(S.un)+'/'+encodeURIComponent(S.pw)+'/'+id+'.'+(e||'m3u8'))}
-function movieUrl(id,e){return proxy(cleanU(S.sv)+'/movie/'+encodeURIComponent(S.un)+'/'+encodeURIComponent(S.pw)+'/'+id+'.'+(e||'mp4'))}
-function buildM3uUrl(){return proxy(cleanU(S.sv)+'/get.php?username='+encodeURIComponent(S.un)+'&password='+encodeURIComponent(S.pw)+'&type=m3u_plus&output=m3u8')}
-  
+function apiUrl(a){return`${cleanU(S.sv)}/player_api.php?username=${encodeURIComponent(S.un)}&password=${encodeURIComponent(S.pw)}${a?'&action='+a:''}`}
+function streamUrl(id,e='m3u8'){return`${cleanU(S.sv)}/live/${encodeURIComponent(S.un)}/${encodeURIComponent(S.pw)}/${id}.${e}`}
+function movieUrl(id,e='mp4'){return`${cleanU(S.sv)}/movie/${encodeURIComponent(S.un)}/${encodeURIComponent(S.pw)}/${id}.${e}`}
+async function api(a){const r=await fetch(apiUrl(a));if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.json()}
+function findBein1(streams){if(!streams||!streams.length)return null;const rx=[/^bein\s*sports\s*1\s*hd$/i,/^bein\s*sports\s*1\s*uhd$/i,/^bein\s*sports\s*1$/i,/^bein\s*1\s*hd$/i,/^bein\s*sports\s*1\s/i,/^bein\s*1\s/i,/bein.*1/i];for(const r of rx){const f=streams.find(s=>r.test(s.name||''));if(f)return f}return streams[0]}
+
 /* Giriş */
 async function handleCodeLogin(){
   const code=D.codeInput.value.trim().toLowerCase();
@@ -578,12 +573,7 @@ function play(stream){
   D.chbn.textContent=idx||'—';D.chbname.textContent=nm;D.chbcat.textContent=grp||'Yayın';D.chblive.style.display=S.at==='live'?'inline-flex':'none';D.nt.textContent=nm;D.nc.textContent=grp||'Yayın';showZap(nm,grp,stream.stream_icon||stream.stream_img||stream.cover||'',idx);addRecent(stream);
   D.pw.classList.add('switching');if(S.hls){S.hls.destroy();S.hls=null}
   let url='';if(S.at==='live')url=streamUrl(stream.stream_id,'m3u8');else if(S.at==='movies'){const ext=stream.container_extension||'mp4';url=movieUrl(stream.stream_id,ext)}else url=`${cleanU(S.sv)}/series/${encodeURIComponent(S.un)}/${encodeURIComponent(S.pw)}/${stream.stream_id}.mp4`;
-  if(url.endsWith('.m3u8')){if(Hls.isSupported())      var h=new Hls({
-        enableWorker:true,lowLatencyMode:true,maxBufferLength:20,maxMaxBufferLength:40,startFragPrefetch:true,fragLoadingTimeOut:15000,fragLoadingMaxRetry:3,manifestLoadingTimeOut:12000,levelLoadingTimeOut:12000,
-        xhrSetup: function(xhr, url) {
-          xhr.open('GET', proxy(url), true);
-        }
-      }););S.hls=h;h.loadSource(url);h.attachMedia(D_vp);h.on(Hls.Events.MANIFEST_PARSED,()=>{D_vp.play().catch(()=>{});D.pw.classList.remove('switching');D.ci.classList.remove('show');updateQualityOpts()});h.on(Hls.Events.ERROR,(ev,d)=>{if(d.fatal){if(d.type===Hls.ErrorTypes.NETWORK_ERROR){toast('Ağ hatası, yeniden bağlanılıyor...','er');h.startLoad()}else if(d.type===Hls.ErrorTypes.MEDIA_ERROR){toast('Medya hatası, kurtarılıyor...','er');h.recoverMediaError()}else{toast('Oynatma hatası','er');h.destroy();S.hls=null}}});startStats()}else if(D_vp.canPlayType('application/vnd.apple.mpegurl')){D_vp.src=url;D_vp.addEventListener('loadedmetadata',()=>{D_vp.play().catch(()=>{});D.pw.classList.remove('switching');D.ci.classList.remove('show')},{once:true})}}
+  if(url.endsWith('.m3u8')){if(Hls.isSupported()){const h=new Hls({enableWorker:true,lowLatencyMode:true,maxBufferLength:20,maxMaxBufferLength:40,startFragPrefetch:true,fragLoadingTimeOut:15000,fragLoadingMaxRetry:3,manifestLoadingTimeOut:12000,levelLoadingTimeOut:12000});S.hls=h;h.loadSource(url);h.attachMedia(D_vp);h.on(Hls.Events.MANIFEST_PARSED,()=>{D_vp.play().catch(()=>{});D.pw.classList.remove('switching');D.ci.classList.remove('show');updateQualityOpts()});h.on(Hls.Events.ERROR,(ev,d)=>{if(d.fatal){if(d.type===Hls.ErrorTypes.NETWORK_ERROR){toast('Ağ hatası, yeniden bağlanılıyor...','er');h.startLoad()}else if(d.type===Hls.ErrorTypes.MEDIA_ERROR){toast('Medya hatası, kurtarılıyor...','er');h.recoverMediaError()}else{toast('Oynatma hatası','er');h.destroy();S.hls=null}}});startStats()}else if(D_vp.canPlayType('application/vnd.apple.mpegurl')){D_vp.src=url;D_vp.addEventListener('loadedmetadata',()=>{D_vp.play().catch(()=>{});D.pw.classList.remove('switching');D.ci.classList.remove('show')},{once:true})}}
   else{D_vp.src=url;D_vp.addEventListener('loadeddata',()=>{D_vp.play().catch(()=>{});D.pw.classList.remove('switching');D.ci.classList.remove('show')},{once:true});D.td.style.display='flex';D.sbr.style.display='block'}
   if(S.at==='live'){D.td.style.display='none';D.sbr.style.display='none'}
   D_vp.onerror=()=>{toast('Bu yayın oynatılamıyor','er');D.pw.classList.remove('switching')};
